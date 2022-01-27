@@ -1,5 +1,7 @@
 #pragma once
 
+#include "StreamUtil.hpp"
+
 namespace mockTea {
     template <typename InputStream>
     class MockTeaInputStream {
@@ -14,7 +16,8 @@ namespace mockTea {
             MockTeaInputStream(MockTeaInputStream &&) = delete;
             MockTeaInputStream& operator=(MockTeaInputStream &&) = delete;
 
-            int readRemainingLength(uint8_t len);
+            int readRemainingLength();
+            
         private:
             InputStream& is_;
     };
@@ -27,18 +30,7 @@ mockTea::MockTeaInputStream<InputStream>::MockTeaInputStream(InputStream& is)
 }
 
 template <typename InputStream>
-int mockTea::MockTeaInputStream<InputStream>::readRemainingLength(uint8_t len)
+int mockTea::MockTeaInputStream<InputStream>::readRemainingLength()
 {
-  constexpr auto overflow = 128 * 128 * 128;
-  auto multiplier = 1;
-  auto value = 0;
-  do {
-    uint8_t byte = is_.nextByte();
-    value += (byte & 127) * multiplier;
-    if (multiplier > overflow) {
-      throw std::exception("malformed variable byte integer");
-    }
-    multiplier *= 128;
-  } while ((byte & 128) != 0);
-  return value;
+  return getRemainingLengthFromStream(is_);
 }
